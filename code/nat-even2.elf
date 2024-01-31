@@ -1,5 +1,6 @@
 % Two definitions of "even", and a proof that they're the same.
 
+% types
 nat : type.
 z : nat.
 s : nat -> nat.
@@ -7,24 +8,39 @@ s : nat -> nat.
 
 %name nat N.
 
+% first definition of even:
+% - zero is even
+% - N+2 is even if N is even
+% anything that ends with a type and has an arror to the left is a type family
 even : nat -> type.
 even/z : even z.
 even/s : even (s (s N)) <- even N.
 
 %solve - : even (s (s (s (s (s (s z)))))).
 
+% second definition of even:
+% - zero is even
+% - N+1 is even if N is odd.
 even2 : nat -> type.
 odd : nat -> type.
 even2/z : even2 z.
 even2/s : even2 (s N) <- odd N.
 
+% N+1 is odd if N is even
 odd/s : odd (s N) <- even2 N.
 
 %solve - : even2 (s (s (s (s (s (s z)))))).
 
 % even implies even2
-even-implies-even2
- : even N -> even2 N -> type.
+even-implies-even2 : even N -> even2 N -> type.
+% The %mode declaration specifies the way in which a relation is intended to be
+% used, by specifying those arguments that are inputs or outputs. Twelf then
+% checks that all constants defining the relation respect the mode specified
+% (are "well-moded").
+% http://twelf.org/wiki/%25mode
+% + is an input, - is an output, the names are arbitrary, but each must be
+% distinct
+% note: multiple outputs are supported, outputs can be in different positions
 %mode even-implies-even2 +X1 -X2.
 
 even-implies-even2/z
@@ -36,19 +52,55 @@ even-implies-even2/s
       (even2/s (odd/s Even2PredPred))
     <- even-implies-even2 EvenPredPred Even2PredPred.
 
+% rules needed to check for termination
+% total needs mode and worlds to succeed first
+% D is just a variable that specifies on which argument to do induction
+% http://twelf.org/wiki/%25worlds
+% http://twelf.org/wiki/%25total
 %worlds () (even-implies-even2 _ _).
 %total D (even-implies-even2 D _).
 
-
 %%%% EXERCISE 1: Prove the other direction.
+% even2 implies even
+even2-implies-even : even2 N -> even N -> type.
+%mode even2-implies-even +X1 -X2.
+
+even2-implies-even/z
+ : even2-implies-even even2/z even/z.
+
+% note: I originally put a dot before <- here by mistake and the parser wasn't
+% really helpful in pointing out that error.
+even2-implies-even/s
+ : even2-implies-even
+      (even2/s (odd/s A))
+      (even/s B)
+    <- even2-implies-even A B.
+
+%worlds () (even2-implies-even _ _).
+%total D (even2-implies-even D _).
 
 %%%% EXERCISE 2:
 % Add a new constant "bogus : nat." to the top of the file,
 % right after the case for successor (s).
 % What happens? Why?
 % Now add it to the bottom of the file. What happens?
+%
+% Answer:
+% at the top, nothing happens
+% at the bottom, it raises this error:
+% Freezing violation: constant bogus
+% extends type family nat
+% Twelf has an index of error messages:
+% http://twelf.org/wiki/Error_messages
+% Freezing violation ...
+%   The metatheory features freeze type families, making it illegal to extend
+%   them. See %freeze.
+% http://twelf.org/wiki/%25freeze
+% Twelf automatically freezes any family for which there has been a %worlds
+% declaration. This prevents mistakes where a metatheorem is proved for a type
+% family but then that type family is extended, invalidating the theorem
 
-%%%% EXERCISE 3 (BONUS): 
+%%%% EXERCISE 3 (BONUS):
 % Prove that every nat is even or odd.
 % Here's some starter code.
 
@@ -58,11 +110,45 @@ eo/o : even-or-odd N <- odd N.
 
 % Prove the following lemma:
 eo-succ : even-or-odd N -> even-or-odd (s N) -> type.
+%mode eo-succ +X1 -X2.
+
+% note: I'm lost here and I feel like Twelf is not helping me to figure
+% out the next steps
+% how would I use Twelf effectively to figure out what subterms I need to
+% provide? I've tried specifying A and B (as "holes"), but the output is
+% not really helpful, at least for me.
+
+eo-succ/e
+ : eo-succ (eo/e X) (eo/o (odd/s X)).
+eo-succ/o
+ : eo-succ (eo/o X) (eo/e (even2/s X)).
+
+% note: I forgot to specify worlds and total and Twelf said OK after I proved
+% one case. I wonder if there's a way to warn about missing totality checks
+%worlds () (eo-succ _ _).
+%total D (eo-succ D _).
 
 % Then prove the main theorem.
 every-nat-eo : {N:nat} even-or-odd N -> type.
+%mode every-nat-eo +X1 -X2.
+
+every-nat-eo/z
+ : every-nat-eo z (eo/e even2/z).
+every-nat-eo/s
+ : every-nat-eo (s A) C
+  <- every-nat-eo A B
+  <- eo-succ B C.
+
+% I had to think for a bit how to supply this.
+% What's special about eo-succ is that by doing eo-succ B C you get a type
+% which is a logical statement, so you can only use it to the right of <-
+% and when you need to provide an argument, that's where you use C.
+% Agda hints at this by coloring eo-succ and every-nat-eo differently compared
+% to eo/e, so this suggests where you can use what.
+
+%worlds () (every-nat-eo _ _).
+%total D (every-nat-eo D _).
 
 %%%% EXERCISE 3.5 (BONUS):
-% Why did we have to use the lemma? 
+% Why did we have to use the lemma?
 % What happens if we try to do the proof without it?
-
