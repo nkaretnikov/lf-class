@@ -11,7 +11,7 @@ s : nat -> nat.
 % first definition of even:
 % - zero is even
 % - N+2 is even if N is even
-% anything that ends with a type and has an arror to the left is a type family
+% anything that ends with a type and has an arrow to the left is a type family
 even : nat -> type.
 even/z : even z.
 even/s : even (s (s N)) <- even N.
