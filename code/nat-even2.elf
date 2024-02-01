@@ -152,3 +152,4 @@ every-nat-eo/s
 %%%% EXERCISE 3.5 (BONUS):
 % Why did we have to use the lemma?
 % What happens if we try to do the proof without it?
+% answered in the Agda file
