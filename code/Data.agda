@@ -75,10 +75,33 @@ bbt2tree : {n : Nat} → BBT n → Tree
 bbt2tree b-leaf = leaf
 bbt2tree (b-node l r) = node (bbt2tree l) (bbt2tree r)
 
-open import Data.Product renaming (_×_ to _∧_)
+-- open import Data.Product renaming (_×_ to _∧_)
+
+bbt-n : ∀ {n : Nat} → (bbt : BBT n) -> Nat
+bbt-n {n} _ = n
+
+n-bbt : ∀ {n : Nat} → BBT n
+n-bbt {z} = b-leaf
+n-bbt {s n} = b-node {n} n-bbt n-bbt
+
+-- prove that Trees are equiv to n-Trees with an index being part of the tree height
+
+
+height-bbt : ∀ {n : Nat} → (bbt : BBT n) → height (bbt2tree bbt) ≡ n
+height-bbt b-leaf = refl
+height-bbt (b-node l r) = {!!}
+-- n -> bbt -> tree
+-- type erasure doesn't work?
+-- is there a trick
 
 bbt-balanced : ∀ {n : Nat} {bbt : BBT n} → balanced (bbt2tree bbt) ≡ true
 bbt-balanced {z} {b-leaf} = refl
-bbt-balanced {s n} {b-node l r} = { ⟨ bbt-balanced {n} {l} , bbt-balanced {n} {r} ⟩ }
+bbt-balanced {s n} {b-node l r} =
+-- { ⟨ bbt-balanced {n} {l} , bbt-balanced {n} {r} ⟩ }
 -- need to translate this to smth that can use refl. eta? see plfa
+   begin
+     balanced (bbt2tree (b-node l r))
+   ≡⟨⟩ balanced (node (bbt2tree l) (bbt2tree r))
+   ≡⟨⟩ height (bbt2tree l) == height (bbt2tree r)
+   ≡⟨⟩ {!!}
 
